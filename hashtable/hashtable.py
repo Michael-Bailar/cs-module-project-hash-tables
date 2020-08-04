@@ -1,166 +1,136 @@
+import math
+
 class HashTableEntry:
-    """
-    Linked List hash table key/value pair
-    """
-    def __init__(self, key, value):
+    # Linked List hash table key/value pair
+    def __init__(self, key=None, value=None):
         self.key = key
         self.value = value
         self.next = None
 
-    def __repr__(self):
-        return f'HashTableEntry({repr(self.key)},{repr(self.value)})'
+class LinkedList:
+    def __init__(self, key=None, value=None):
+        if value == None:
+            self.head = None
+        else:
+            self.head = HashTableEntry(key, value)
 
+    def add_to_head(self, key, value):
+        if self.head is None:
+            self.head = HashTableEntry(key, value)
+        else:
+            new_node = HashTableEntry(key, value)
+            new_node.next = self.head
+            self.head = new_node
+        return self.head
+
+    def find(self, key):
+        current = self.head
+        while current is not None:
+            if current.key == key:
+                return current.value
+            current = current.next
+        return None
+
+    def insert(self, key, value):
+        current = self.head
+        while current is not None:
+            if current.key == key:
+                current.value = value
+                return current
+            current = current.next
+        self.add_to_head(key, value)
+
+    def delete(self, key):
+        current = self.head
+        if current.key == key: #the head is to be deleted
+            value = current.value
+            self.head = current.next
+            return value
+        while current.next is not None:
+            if current.next.key == key:
+                #this is what we need to delete
+                value = current.next.value
+                current.next = current.next.next
+                return value
+            current = current.next
+        return None
 
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
 
 
 class HashTable:
-    """
-    A hash table that with `capacity` buckets
-    that accepts string keys
-
-    Implement this.
-    """
+    # A hash table that with `capacity` buckets
+    #that accepts string keys
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.storage = [None] * self.capacity
-
+        self.storage = []
+        self.load = 0
+        for _ in range(capacity):
+            self.storage.append(LinkedList(None, None))
 
     def get_num_slots(self):
-        """
-        Return the length of the list you're using to hold the hash
-        table data. (Not the number of items stored in the hash table,
-        but the number of slots in the main list.)
+        # Return the length of the list you're using to hold the hash
+        # table data. (Not the number of items stored in the hash table,
+        # but the number of slots in the main list.)
 
-        One of the tests relies on this.
-
-        Implement this.
-        """
-        return len(self.storage)
+        return self.capacity
 
     def get_load_factor(self):
-        """
-        Return the load factor for this hash table.
+        # Return the load factor for this hash table.
 
-        Implement this.
-        """
-        # Your code here
+        return self.load / self.capacity
 
 
     def fnv1(self, key):
-        """
-        FNV-1 Hash, 64-bit
+        # FNV-1 Hash, 64-bit
 
-        Implement this, and/or DJB2.
-        """
-
-        # Your code here
-        # pseudocode
+        FNV_offset_basis = 14695981039346656037
         FNV_prime = 1099511628211
-        offset_basis = 14695981039346656037
+        hash = FNV_offset_basis
         string_bytes = key.encode()
-
-        hash = offset_basis
 
         for char in string_bytes:
             hash = hash * FNV_prime
             hash = hash ^ char
         return hash
 
-
-    def djb2(self, key):
-        """
-        DJB2 hash, 32-bit
-
-        Implement this, and/or FNV-1.
-        """
-
-
     def hash_index(self, key):
-        """
-        Take an arbitrary key and return a valid integer index
-        between within the storage capacity of the hash table.
-        """
+        # Take an arbitrary key and return a valid integer index
+        # between within the storage capacity of the hash table.
+
         return self.fnv1(key) % self.capacity
-        #return self.djb2(key) % self.capacity
 
     def put(self, key, value):
-        """
-        Store the value with the given key.
+        # Store the value with the given key.
+        self.load += 1
 
-        Hash collisions should be handled with Linked List Chaining.
-
-        Implement this.
-        """
-        location = self.hash_index(key)
-
-        if self.storage[location] != None:
-                entry = self.storage[location]
-
-                while entry:
-                    if entry.key == key:
-                        entry.value = value
-                        break
-                    elif entry.next == None:
-                        entry.next = HashTableEntry(key, value)
-                        break
-                else:
-                    entry = entry.next
-        else:
-            self.storage[location] = HashTableEntry(key, value)
+        if self.get_load_factor() > 0.7:
+            self.resize(self.capacity * 2)
+        index = self.hash_index(key)
+        self.storage[index].insert(key, value)
 
 
     def delete(self, key):
-        """
-        Remove the value stored with the given key.
-
-        Print a warning if the key is not found.
-
-        Implement this.
-        """
-        # Your code here
-        location = self.hash_index(key)
-        entry = self.storage[location]
-
-        if self.storage[location] == None:
-            return("can't fine k and v at location")
-
-        if entry.next == None:
-            if entry.key == key:
-                entry.value = None
-                return
-            else:
-                return("no entry to delete")
-        
-        while entry:
-            if entry.key == key:
-                entry.value = None
-                return(f'{key} removed')
-            entry = entry.next
-        return("no key found")
-
+        # Remove the value stored with the given key.
+        # Print a warning if the key is not found.
+        self.load -= 1
+        if self.get_load_factor() < 0.25:
+            self.resize(math.ceil(self.capacity/2))
+        index = self.hash_index(key)
+        self.storage[index].delete(key)
 
     def get(self, key):
-        """
-        Retrieve the value stored with the given key.
+        # Retrieve the value stored with the given key.
+        # Returns None if the key is not found.
 
-        Returns None if the key is not found.
-
-        Implement this.
-        """
-        location = self.hash_index(key)
-        entry = self.storage[location]
-        item = None
-
-        while entry:
-            if entry.key == key:
-                item = entry.value
-                return item
-            else:
-                entry = entry.next
-        return "can't find the value"
+        index = self.hash_index(key)
+        value = self.storage[index].find(key)
+        #check for the key in the Linked List
+    
+        
+        return value
 
 
     def resize(self, new_capacity):
@@ -171,6 +141,18 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        # create a new array that's twice the size of the old array (capacity * 2)
+        # iterate through everything and 
+        # insert each one into the new array
+        new_hash = HashTable(new_capacity)
+        for ht in self.storage:
+            current = ht.head
+            while current is not None:
+                new_hash.put(current.key, current.value)
+                current = current.next
+        self.capacity = new_hash.capacity
+        self.storage = new_hash.storage
+        self.load = new_hash.load
 
 
 
@@ -210,36 +192,3 @@ if __name__ == "__main__":
     print("")
 
 
-class LinkedList:
-    def __init__(self):
-        self.head = None
-
-    def find(self, key):
-        current = self.head
-        
-        while current is not None:
-            if current.key == key:
-                return current
-            current = current.next
-
-        return current
-
-    def update_or_else_insert_at_head(self, key, value):
-
-        current = self.head
-        while current is not None:
-            if current.key == key:
-                current.value = value
-                return
-            current = current.next
-    
-        new_node = HashTableEntry(key, value)
-        new_node.next = self.head
-        self.head = new_node
-
-    def update_or_else_insert_at_tail(self, key, value):
-        # same as at head
-        pass
-
-    def delete(self):
-        pass
