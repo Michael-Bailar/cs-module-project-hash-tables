@@ -7,6 +7,9 @@ class HashTableEntry:
         self.value = value
         self.next = None
 
+    def __repr__(self):
+        return f'HashTableEntry({repr(self.key)},{repr(self.value)})'
+
 
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
@@ -21,7 +24,8 @@ class HashTable:
     """
 
     def __init__(self, capacity):
-        # Your code here
+        self.capacity = capacity
+        self.storage = [None] * self.capacity
 
 
     def get_num_slots(self):
@@ -34,8 +38,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
+        return len(self.storage)
 
     def get_load_factor(self):
         """
@@ -54,6 +57,17 @@ class HashTable:
         """
 
         # Your code here
+        # pseudocode
+        FNV_prime = 1099511628211
+        offset_basis = 14695981039346656037
+        string_bytes = key.encode()
+
+        hash = offset_basis
+
+        for char in string_bytes:
+            hash = hash * FNV_prime
+            hash = hash ^ char
+        return hash
 
 
     def djb2(self, key):
@@ -62,7 +76,6 @@ class HashTable:
 
         Implement this, and/or FNV-1.
         """
-        # Your code here
 
 
     def hash_index(self, key):
@@ -70,8 +83,8 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1(key) % self.capacity
-        return self.djb2(key) % self.capacity
+        return self.fnv1(key) % self.capacity
+        #return self.djb2(key) % self.capacity
 
     def put(self, key, value):
         """
@@ -81,7 +94,22 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        location = self.hash_index(key)
+
+        if self.storage[location] != None:
+                entry = self.storage[location]
+
+                while entry:
+                    if entry.key == key:
+                        entry.value = value
+                        break
+                    elif entry.next == None:
+                        entry.next = HashTableEntry(key, value)
+                        break
+                else:
+                    entry = entry.next
+        else:
+            self.storage[location] = HashTableEntry(key, value)
 
 
     def delete(self, key):
@@ -93,6 +121,25 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        location = self.hash_index(key)
+        entry = self.storage[location]
+
+        if self.storage[location] == None:
+            return("can't fine k and v at location")
+
+        if entry.next == None:
+            if entry.key == key:
+                entry.value = None
+                return
+            else:
+                return("no entry to delete")
+        
+        while entry:
+            if entry.key == key:
+                entry.value = None
+                return(f'{key} removed')
+            entry = entry.next
+        return("no key found")
 
 
     def get(self, key):
@@ -103,7 +150,17 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        location = self.hash_index(key)
+        entry = self.storage[location]
+        item = None
+
+        while entry:
+            if entry.key == key:
+                item = entry.value
+                return item
+            else:
+                entry = entry.next
+        return "can't find the value"
 
 
     def resize(self, new_capacity):
@@ -151,3 +208,38 @@ if __name__ == "__main__":
         print(ht.get(f"line_{i}"))
 
     print("")
+
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def find(self, key):
+        current = self.head
+        
+        while current is not None:
+            if current.key == key:
+                return current
+            current = current.next
+
+        return current
+
+    def update_or_else_insert_at_head(self, key, value):
+
+        current = self.head
+        while current is not None:
+            if current.key == key:
+                current.value = value
+                return
+            current = current.next
+    
+        new_node = HashTableEntry(key, value)
+        new_node.next = self.head
+        self.head = new_node
+
+    def update_or_else_insert_at_tail(self, key, value):
+        # same as at head
+        pass
+
+    def delete(self):
+        pass
