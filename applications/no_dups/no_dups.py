@@ -1,5 +1,20 @@
+
+
 def no_dups(s):
     # Your code here
+    cache = []
+    s_split = s.split()
+    s_concat = ""
+    for word in s_split:
+        if len(cache) < 1:
+            cache.append(word)
+            s_concat += word
+        elif word in cache:
+            pass
+        else:
+            cache.append(word)
+            s_concat = s_concat + " " + word
+    return s_concat
 
 
 
