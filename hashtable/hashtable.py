@@ -32,6 +32,7 @@ class LinkedList:
         return None
 
     def insert(self, key, value):
+        print("test")
         current = self.head
         while current is not None:
             if current.key == key:
