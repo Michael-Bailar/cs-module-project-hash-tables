@@ -118,7 +118,7 @@ class HashTable:
         # Print a warning if the key is not found.
         self.load -= 1
         if self.get_load_factor() < 0.25:
-            self.resize(math.ceil(self.capacity/2))
+            self.resize(self.capacity//2)
         index = self.hash_index(key)
         self.storage[index].delete(key)
 
